@@ -18,10 +18,10 @@ var Envs = initConfig()
 
 func initConfig() Config {
 	return Config{
-		DBPort: getEnv("PORT", "5432"),
-		DBUser: getEnv("DB_USER", "swap"),
-		DBPass: getEnv("DB_PASS", "swap"),
-		DBAdrs: fmt.Sprintf("%s:%s", getEnv("DB_HOST", "127.0.0.1"), getEnv("DB_PORT", "5432")),
+		DBPort: getEnv("PORT", "8080"),
+		DBUser: getEnv("DB_USER", "root"),
+		DBPass: getEnv("DB_PASS", "root"),
+		DBAdrs: fmt.Sprintf("%s:%s", getEnv("DB_HOST", "172.17.0.2"), getEnv("DB_PORT", "3306")),
 		DBName: getEnv("DB_NAME", "sprintify"),
 		JWTSec: getEnv("JWT_SECRET", "randomjwtsecret"),
 	}
