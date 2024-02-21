@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 func main() {
-	fmt.Println("Hello world")
+	api := NewAPIServer(":3000", nil)
 }
