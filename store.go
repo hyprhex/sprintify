@@ -1,10 +1,13 @@
 package main
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type Store interface {
 	// User Services
 	CreateUser(u *User) (*User, error)
+	LoginUser(email string) (*UserLoginRequest, error)
 	GetUserByID(id string) (*User, error)
 
 	// Task services
@@ -39,6 +42,17 @@ func (s *Storage) CreateUser(u *User) (*User, error) {
 
 	u.ID = id
 	return u, nil
+}
+
+func (s *Storage) LoginUser(email string) (*UserLoginRequest, error) {
+	var u UserLoginRequest
+	err := s.db.QueryRow(`SELECT id, email, password FROM users WHERE email = ?`, email).Scan(
+		&u.ID,
+		&u.Email,
+		&u.Password,
+	)
+
+	return &u, err
 }
 
 // Task Services methods

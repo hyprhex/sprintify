@@ -7,13 +7,14 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
-	errEmailRequire     = errors.New("Email is required")
-	errFirstNameRequire = errors.New("FirstName is required")
-	errLastNameRequire  = errors.New("LastName is required")
-	errPasswordRequire  = errors.New("Password is required")
+	errEmailRequire     = errors.New("email is required")
+	errFirstNameRequire = errors.New("firstName is required")
+	errLastNameRequire  = errors.New("lastName is required")
+	errPasswordRequire  = errors.New("password is required")
 )
 
 type UserService struct {
@@ -26,6 +27,7 @@ func NewUserService(s Store) *UserService {
 
 func (s *UserService) RegisterRouter(r *mux.Router) {
 	r.HandleFunc("/users/register", s.handleUserRegister).Methods("POST")
+	r.HandleFunc("/users/login", s.handleUserLogin).Methods("POST")
 }
 
 func (s *UserService) handleUserRegister(w http.ResponseWriter, r *http.Request) {
@@ -73,6 +75,49 @@ func (s *UserService) handleUserRegister(w http.ResponseWriter, r *http.Request)
 	WriteJSON(w, http.StatusCreated, token)
 }
 
+func (s *UserService) handleUserLogin(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusBadRequest)
+		return
+	}
+
+	defer r.Body.Close()
+
+	var payload *UserLoginRequest
+	err = json.Unmarshal(body, &payload)
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, ErrorResponse{Error: "Invalid request payload"})
+		return
+	}
+
+	err = validateUserLoginPayload(payload)
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, ErrorResponse{Error: "Invalid user"})
+		return
+	}
+
+	u, err := s.store.LoginUser(payload.Email)
+	if err != nil {
+		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(payload.Password))
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, ErrorResponse{Error: "Invalid password"})
+		return
+	}
+
+	token, err := createAndSetAuthCookie(u.ID, w)
+	if err != nil {
+		WriteJSON(w, http.StatusInternalServerError, ErrorResponse{Error: "Error creating user"})
+		return
+	}
+
+	WriteJSON(w, http.StatusCreated, token)
+}
+
 func validateUserPayload(user *User) error {
 	if user.Email == "" {
 		return errEmailRequire
@@ -83,6 +128,18 @@ func validateUserPayload(user *User) error {
 	if user.LastName == "" {
 		return errLastNameRequire
 	}
+	if user.Password == "" {
+		return errPasswordRequire
+	}
+
+	return nil
+}
+
+func validateUserLoginPayload(user *UserLoginRequest) error {
+	if user.Email == "" {
+		return errEmailRequire
+	}
+
 	if user.Password == "" {
 		return errPasswordRequire
 	}

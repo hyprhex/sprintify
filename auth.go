@@ -45,7 +45,6 @@ func permissionDenied(w http.ResponseWriter) {
 	WriteJSON(w, http.StatusUnauthorized, ErrorResponse{
 		Error: fmt.Errorf("permission denied").Error(),
 	})
-	return
 }
 
 func GetTokenFromRequest(r *http.Request) string {
