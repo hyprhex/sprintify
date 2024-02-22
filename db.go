@@ -30,7 +30,6 @@ func NewMySQLStorage(cfg mysql.Config) *MySQLStorage {
 }
 
 func (s *MySQLStorage) Init() (*sql.DB, error) {
-	// TODO: write a function that create a database if not exists
 	if err := s.createProjectsTable(); err != nil {
 		return nil, err
 	}
