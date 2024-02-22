@@ -24,6 +24,9 @@ func (s *APIServer) Serve() {
 	router := mux.NewRouter()
 	subRouter := router.PathPrefix("/api/v1").Subrouter()
 
+	projectService := NewProjectService(s.store)
+	projectService.RegisterRoutes(subRouter)
+
 	userService := NewUserService(s.store)
 	userService.RegisterRouter(subRouter)
 

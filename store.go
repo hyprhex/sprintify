@@ -5,6 +5,11 @@ import (
 )
 
 type Store interface {
+	// Project services
+	CreateProject(p *Project) (*Project, error)
+	GetProject(id string) (*Project, error)
+	DeleteProject(id string) error
+
 	// User Services
 	CreateUser(u *User) (*User, error)
 	LoginUser(email string) (*UserLoginRequest, error)
@@ -23,6 +28,40 @@ func NewStore(db *sql.DB) *Storage {
 	return &Storage{
 		db: db,
 	}
+}
+
+func (s *Storage) CreateProject(p *Project) (*Project, error) {
+	rows, err := s.db.Exec(
+		`INSERT INTO projects (name)
+		VALUES (?)
+		`, p.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := rows.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+
+	p.ID = id
+	return p, nil
+}
+
+func (s *Storage) GetProject(id string) (*Project, error) {
+	var p Project
+	err := s.db.QueryRow(`SELECT * FROM projects WHERE id = ?`, id).Scan(
+		&p.ID,
+		&p.Name,
+		&p.CreatedAt,
+	)
+
+	return &p, err
+}
+
+func (s *Storage) DeleteProject(id string) error {
+	_, err := s.db.Exec(`DELETE FROM projects WHERE id = ?`, id)
+	return err
 }
 
 // User Services methods

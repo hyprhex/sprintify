@@ -29,3 +29,9 @@ type UserLoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+
+type Project struct {
+	ID        int64     `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"createdAt"`
+}
